@@ -1,0 +1,19 @@
+{
+  "name": "FBS GROUPE — Centre de formation",
+  "short_name": "FBS Formation",
+  "lang": "fr-GN",
+  "description": "Catalogue des formations FBS GROUPE SARLU à Kankan.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fb",
+  "theme_color": "#102a56",
+  "icons": [
+    {
+      "src": "IMAGES/Logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
