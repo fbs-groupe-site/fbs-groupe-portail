@@ -35,6 +35,32 @@
     })[character]);
   }
 
+  function repairFrenchText(value) {
+    const replacements = new Map([
+      [0x20ac, 0x80], [0x201a, 0x82], [0x0192, 0x83], [0x201e, 0x84], [0x2026, 0x85],
+      [0x2020, 0x86], [0x2021, 0x87], [0x02c6, 0x88], [0x2030, 0x89], [0x0160, 0x8a],
+      [0x2039, 0x8b], [0x0152, 0x8c], [0x017d, 0x8e], [0x2018, 0x91], [0x2019, 0x92],
+      [0x201c, 0x93], [0x201d, 0x94], [0x2022, 0x95], [0x2013, 0x96], [0x2014, 0x97],
+      [0x02dc, 0x98], [0x2122, 0x99], [0x0161, 0x9a], [0x203a, 0x9b], [0x0153, 0x9c],
+      [0x017e, 0x9e], [0x0178, 0x9f]
+    ]);
+    let text = String(value ?? "");
+    const brokenSequence = /(?:[ÃÂ][-ÿ€])+/g;
+    for (let attempt = 0; attempt < 2 && /[ÃÂ]/.test(text); attempt += 1) {
+      text = text.replace(brokenSequence, (sequence) => {
+        try {
+          const bytes = Array.from(sequence, (character) => {
+            const code = character.codePointAt(0);
+            return code <= 0xff ? code : replacements.get(code);
+          });
+          return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bytes));
+        } catch {
+          return sequence;
+        }
+      });
+    }
+    return text.replace(/â€™/g, "’").replace(/â€œ/g, "“").replace(/â€�/g, "”");
+  }
   function currency(value) {
     return value == null ? "À confirmer" : `${Number(value).toLocaleString("fr-FR")} GNF`;
   }
@@ -95,10 +121,15 @@
 
   async function createNotification(templateId, studentId, enrollmentId, variables = {}) {
     const template = unwrap(await state.client.from("notification_templates").select("*").eq("id", templateId).single());
-    const message = template.body.replace(/\{\{([a-z_]+)\}\}/gi, (_match, key) => String(variables[key] ?? ""));
+    const templateBody = repairFrenchText(template.body);
+    let message = templateBody.replace(/\{\{([a-z_]+)\}\}/gi, (_match, key) => String(variables[key] ?? ""));
+    if (templateId === "paiement_valide" && (!variables.recu || variables.recu === "en préparation")) {
+      message = `Votre paiement de ${repairFrenchText(variables.montant)} a été validé. Votre reçu sera disponible dans votre espace.`;
+    }
+    message = message.replace(/Le reçu disponible dans votre espace est disponible dans votre espace\.?/gi, "Votre reçu est disponible dans votre espace.");
     return unwrap(await state.client.from("notifications").insert({
       student_id: studentId, enrollment_id: enrollmentId || null, template_id: template.id,
-      event_type: template.name, channel: template.channel, message,
+      event_type: repairFrenchText(template.name), channel: repairFrenchText(template.channel), message: repairFrenchText(message),
       delivery_status: template.enabled ? "Fournisseur e-mail/SMS à configurer" : "Désactivée par le centre",
       created_by: state.user.id
     }));
@@ -243,7 +274,7 @@
       <section class="card section-card" id="student-resources"><div class="card__heading"><div><h2>Mes ressources</h2><p>Ressources partagées avec vous ou votre formation</p></div></div>${renderResourceList(state.resources)}</section>
       <section class="card section-card" id="student-announcements"><div class="card__heading"><div><h2>Annonces et notifications</h2><p>Communications enregistrées par le centre</p></div></div>
       ${renderAnnouncements(state.announcements)}
-      <div class="document-list" style="margin-top:14px">${state.notifications.map((item) => `<div class="document-item"><div><strong>${escapeHtml(item.event_type)}</strong><small>${escapeHtml(item.message)} · ${escapeHtml(item.delivery_status)}</small></div><small>${dateLabel(item.created_at?.slice(0, 10))}</small></div>`).join("") || `<p>Aucune notification.</p>`}</div></section>`;
+      <div class="document-list" style="margin-top:14px">${state.notifications.map((item) => `<div class="document-item"><div><strong>${escapeHtml(repairFrenchText(item.event_type))}</strong><small>${escapeHtml(repairFrenchText(item.message))} · ${escapeHtml(repairFrenchText(item.delivery_status))}</small></div><small>${dateLabel(item.created_at?.slice(0, 10))}</small></div>`).join("") || `<p>Aucune notification.</p>`}</div></section>`;
   }
 
   function renderDocumentList(documents) {
@@ -497,9 +528,9 @@
       <div class="field field--wide form-actions"><button class="button button--primary" type="submit">Publier l’annonce</button></div></form>${renderAnnouncements(announcements)}</section>`;
     view.insertAdjacentHTML("beforeend", `<section class="card section-card"><div class="card__heading"><div><h2>Modèles de notifications</h2><p>Modèles en français modifiables. L’envoi e-mail/SMS reste à configurer.</p></div></div>
       <div class="admin-grid">${notificationTemplates.map((template) => `<form class="condition-card" data-form="template" data-template="${escapeHtml(template.id)}">
-      <div class="card__heading"><h3>${escapeHtml(template.name)}</h3><span class="pill">${escapeHtml(template.channel)}</span></div>
-      <div class="field"><label>Objet</label><input class="input" name="subject" value="${escapeHtml(template.subject)}"></div>
-      <div class="field" style="margin-top:9px"><label>Message</label><textarea class="textarea" name="body" required>${escapeHtml(template.body)}</textarea></div>
+      <div class="card__heading"><h3>${escapeHtml(repairFrenchText(template.name))}</h3><span class="pill">${escapeHtml(repairFrenchText(template.channel))}</span></div>
+      <div class="field"><label>Objet</label><input class="input" name="subject" value="${escapeHtml(repairFrenchText(template.subject))}"></div>
+      <div class="field" style="margin-top:9px"><label>Message</label><textarea class="textarea" name="body" required>${escapeHtml(repairFrenchText(template.body))}</textarea></div>
       <p class="field-help">Variables : {{formation}}, {{statut}}, {{montant}}, {{recu}}, {{document}}, {{ressource}}, {{solde}}</p>
       <label class="check-row" style="margin-top:9px"><input type="checkbox" name="enabled"${template.enabled ? " checked" : ""}><span>Modèle activé</span></label>
       <div class="form-actions"><button class="button button--small" type="submit">Enregistrer le modèle</button></div></form>`).join("")}</div></section>`);
@@ -751,7 +782,7 @@
     }
     try {
       await createNotification(checked ? "paiement_valide" : "paiement_recu", enrollment.student_id, enrollment.id, {
-        montant: currency(inserted.amount), recu: inserted.receipt_number || "disponible dans votre espace"
+        montant: currency(inserted.amount), recu: inserted.receipt_number || "en préparation"
       });
     } catch (notificationError) {
       toast(`Paiement enregistré, mais la notification n’a pas été créée : ${errorText(notificationError)}`, true);
@@ -767,7 +798,7 @@
     const enrollment = state.enrollments.find((item) => item.id === payment.enrollment_id);
     try {
       await createNotification("paiement_valide", payment.student_id, payment.enrollment_id, {
-        montant: currency(payment.amount), recu: payment.receipt_number || "disponible dans votre espace"
+        montant: currency(payment.amount), recu: payment.receipt_number || "en préparation"
       });
     } catch (notificationError) {
       toast(`Paiement validé, mais notification non créée : ${errorText(notificationError)}`, true);
