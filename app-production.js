@@ -186,10 +186,10 @@
     const categories = ["Toutes les formations", ...new Set(state.courses.map((course) => course.category))];
     const visible = state.courses.filter((course) => state.category === "Toutes les formations" || course.category === state.category);
     view.innerHTML = `${heading("Découvrez nos formations", "Choisissez votre parcours. Les tarifs ou durées non confirmés sont affichés comme tels et peuvent être mis à jour par le personnel.")}
-      <section class="hero"><div><div class="eyebrow" style="color:#f3cf79">CENTRE DE FORMATION · KANKAN</div><h1 style="color:white">Faites grandir vos compétences avec FBS GROUPE</h1>
+      <section class="hero"><div class="hero__copy"><div class="hero__brand"><img src="IMAGES/Logo.png" alt="Logo FBS GROUPE"><span>Centre de formation · Kankan</span></div><h1>Faites grandir vos compétences avec FBS GROUPE</h1>
       <p>Un accompagnement professionnel en bureautique, informatique, comptabilité, anglais et développement personnel.</p>
-      <div class="hero__actions"><button type="button" class="button button--primary" data-action="scroll-catalog">Voir les formations</button><a class="button hero__secondary" href="mailto:fbsgroupsarlu@gmail.com">Contacter le centre</a></div>
-      </div><div class="hero__visual"><img src="IMAGES/FBS2.jpeg" alt="Centre de formation FBS GROUPE"><div class="hero__image-caption">Kankan, Guinée · Entre l’UJNK et l’Hôtel Buffet de la Gare</div></div></section>
+      <div class="hero__actions"><button type="button" class="button button--primary" data-action="scroll-catalog">Voir les formations</button><button type="button" class="button hero__secondary" data-action="account">S’inscrire</button><a class="button hero__tertiary" href="mailto:fbsgroupsarlu@gmail.com">Contacter le centre</a></div>
+      </div><div class="hero__visual"><img src="IMAGES/FBS2.jpeg" alt="Espace de travail informatique"><div class="hero__image-caption">Kankan, Guinée · Entre l’UJNK et l’Hôtel Buffet de la Gare</div></div></section>
       <div class="trust-row"><div class="trust-card"><span class="trust-card__icon">✓</span><div><strong>Inscription suivie</strong><small>Suivez chaque étape de votre dossier.</small></div></div>
       <div class="trust-card"><span class="trust-card__icon">₲</span><div><strong>Paiements enregistrés au centre</strong><small>Aucun paiement en ligne n’est activé.</small></div></div>
       <div class="trust-card"><span class="trust-card__icon">▣</span><div><strong>Documents sécurisés</strong><small>Accès réservé à votre compte.</small></div></div></div>
